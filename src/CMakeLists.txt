@@ -11,5 +11,5 @@ IF (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static -lstdc++ -lpthread")
 ENDIF ()
 
-add_executable(${CMAKE_PROJECT_NAME}_app ${SOURCES})
+add_executable(${CMAKE_PROJECT_NAME}_app ${SOURCES} Trie.hxx)
 

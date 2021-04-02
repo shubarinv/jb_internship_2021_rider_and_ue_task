@@ -1,7 +1,5 @@
 //
 // Created by vhundef on 02.04.2021.
 //
-
-int main(){
-    return 0;
-}
+#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include "catch.hpp"
