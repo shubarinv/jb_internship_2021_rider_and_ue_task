@@ -25,7 +25,7 @@ public:
         return m_children;
     }
 
-    Node *getChild(char &t_childToLookFor) {
+    Node *getChild(char t_childToLookFor) {
         for (auto &child : m_children) {
             if (child->value() == t_childToLookFor) { return child; }
         }
