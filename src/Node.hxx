@@ -15,9 +15,14 @@ public:
     Node() {
         m_value = '\0';///< the only way this to happen, is for Node to be in root of the Trie
     }
+    explicit Node(char value) : m_value(value){}
 
     [[nodiscard]] char value() const {
         return m_value;
+    }
+
+    std::forward_list<Node *>& children() {
+        return m_children;
     }
 
     Node *getChild(char &t_childToLookFor) {
