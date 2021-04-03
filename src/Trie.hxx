@@ -55,7 +55,9 @@ public:
         }
         file.close();
     }
-
+    Node* getRoot(){
+        return root;
+    }
 private:
     Node *root{nullptr};
 
