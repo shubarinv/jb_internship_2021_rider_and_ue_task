@@ -6,6 +6,8 @@
 #define JB_INTSHIP_2021_TRIE_HXX
 
 #include "Node.hxx"
+#include <fstream>
+#include <future>
 
 class Trie {
 public:
@@ -30,11 +32,28 @@ public:
         addWord(t_word.substr(1, t_word.size()), root->getChild(t_word[0]));// by this time we can be sure that there is a child whose val. is equal to word's first character. We will now switch to this child
     }
 
-    void findWord(std::string word) {
-        throw std::logic_error("Not implemented");
+    void findRecursive(std::string t_word, bool t_useAsync = true) {
+        for (auto &child : root->children()) {
+            if (t_useAsync) {
+                auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "");// using async to speed up search process
+            } else {
+                findWordRecursive(root, std::move(t_word), "");
+            }
+        }
     }
-    bool hasWord(std::string word) {
-        throw std::logic_error("Not implemented");
+
+    void readFromFile(const std::string& filepath){
+        std::ifstream file(filepath);
+        if(!file.is_open()) {
+            perror("Error open");
+            exit(EXIT_FAILURE);
+        }
+
+        std::string line;
+        while(getline(file, line)) {
+            addWord(line);
+        }
+        file.close();
     }
 
 private:
