@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <forward_list>
+#include <iostream>
 #include <iterator>
 
 class Node {
@@ -14,6 +15,7 @@ public:
     Node() {
         m_value = '\0';///< the only way this to happen, is for Node to be in root of the Trie
     }
+
     [[nodiscard]] char value() const {
         return m_value;
     }
@@ -22,13 +24,10 @@ public:
         for (auto &child : m_children) {
             if (child->value() == t_childToLookFor) { return child; }
         }
+        return nullptr;
     }
     bool hasChild(char &t_childToLookFor) {
-        for (auto &child : m_children) {
-            if (child->value() == t_childToLookFor)
-                return true;
-        }
-        return false;
+        return getChild(t_childToLookFor) != nullptr;
     }
 
 private:
