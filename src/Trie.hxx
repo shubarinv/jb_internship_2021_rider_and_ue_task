@@ -41,6 +41,12 @@ public:
             }
         }
     }
+    [[maybe_unused]] [[nodiscard]] bool hasWord(std::string word) {
+        if (root->hasChild(word[0])) {
+            return hasWord(word.substr(1, word.size()), root->getChild(word[0]));
+        }
+        return false;
+    }
 
     void readFromFile(const std::string& filepath){
         std::ifstream file(filepath);
@@ -89,6 +95,14 @@ private:
         for (auto &childNode : node->children()) {// recursively going through the trie
             findWordRecursive(childNode, word, result);
         }
+    }
+
+    [[nodiscard]] bool hasWord(std::string word, Node *node) {
+        if (word[0] == '\0') return true;
+        if (node->hasChild(word[0])) {
+            return hasWord(word.substr(1, word.size()), node->getChild(word[0]));
+        }
+        return false;
     }
 };
 
