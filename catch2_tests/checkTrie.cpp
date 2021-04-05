@@ -8,25 +8,25 @@
 TEST_CASE("Checking Trie", "[Trie]") {
     SECTION("AddWord") {
         SECTION("Calling addWord() directly") {
-            Trie trie;
+            vh::Trie trie;
             trie.addWord("test");
             REQUIRE(trie.getRoot()->getChild('t')->getChild('e')->getChild('s')->getChild('t') != nullptr);
         }
         SECTION("Using readFromFile()") {
             SECTION("reading empty file") {
-                Trie trie;
+                vh::Trie trie;
                 trie.readFromFile("../../catch2_tests/emptyFile.txt");
                 REQUIRE(trie.getRoot()->children().empty());
             }
             SECTION("reading file with content") {
-                Trie trie;
+                vh::Trie trie;
                 trie.readFromFile("../../catch2_tests/fileWithContent.txt");
                 REQUIRE(!trie.getRoot()->children().empty());
             }
         }
     }
-    SECTION("Find word"){
-        Trie trie;
+    SECTION("Find word") {
+        vh::Trie trie;
         trie.readFromFile("../../catch2_tests/fileWithContent.txt");
         REQUIRE(trie.hasWord("JetBrains"));
         REQUIRE(trie.hasWord("Is the best"));
