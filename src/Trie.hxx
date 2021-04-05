@@ -8,138 +8,139 @@
 #include "Node.hxx"
 #include <fstream>
 #include <future>
+namespace vh {
+    class Trie {
+    public:
+        // Variables
 
-class Trie {
-public:
-    // Variables
+        // Constructors
+        Trie() {
+            root = new Node();
+        }
+        explicit Trie(const std::string &filename) {
+            root = new Node();
+        }
 
-    // Constructors
-    Trie() {
-        root = new Node();
-    }
-    explicit Trie(const std::string& filename) {
-        root = new Node();
-    }
+        // functions
 
-    // functions
-
-    /**
+        /**
      * @brief adds specified word to data structure
      * @param t_word word to add
      */
-    void addWord(std::string t_word) {
-        if (t_word.empty()) {
-            std::cerr << "Trie(" << this << ")::addWord(): Attempt to add empty word! (word will be ignored)" << std::endl;
+        void addWord(std::string t_word) {
+            if (t_word.empty()) {
+                std::cerr << "Trie(" << this << ")::addWord(): Attempt to add empty word! (word will be ignored)" << std::endl;
+            }
+            if (!root->hasChild(t_word[0])) {                    // checking if root node has a child node with a value that is equal to first char in given word
+                root->children().push_front(new Node(t_word[0]));// node doesn't have child with required value, so we add it here
+            }
+            addWord(t_word.substr(1, t_word.size()), root->getChild(t_word[0]));// by this time we can be sure that there is a child whose val. is equal to word's first character. We will now switch to this child
         }
-        if (!root->hasChild(t_word[0])) {                    // checking if root node has a child node with a value that is equal to first char in given word
-            root->children().push_front(new Node(t_word[0]));// node doesn't have child with required value, so we add it here
-        }
-        addWord(t_word.substr(1, t_word.size()), root->getChild(t_word[0]));// by this time we can be sure that there is a child whose val. is equal to word's first character. We will now switch to this child
-    }
 
-    /**
+        /**
      * @brief recursively goes through the data structure and looks for specified combination of symbols
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    void findRecursive(std::string t_word, bool t_useAsync = true) {
-        for (auto &child : root->children()) {
-            if (t_useAsync) {
-                auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "");// using async to speed up search process
-            } else {
-                findWordRecursive(root, std::move(t_word), "");
+        void findRecursive(std::string t_word, bool t_useAsync = true) {
+            for (auto &child : root->children()) {
+                if (t_useAsync) {
+                    auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "");// using async to speed up search process
+                } else {
+                    findWordRecursive(root, std::move(t_word), "");
+                }
             }
         }
-    }
-    /**
+        /**
      * @brief looks for specified word; starts looking from data structure's root
      * @param word word to look for
      * @return
      */
-    [[maybe_unused]] [[nodiscard]] bool hasWord(std::string word) {
-        if (root->hasChild(word[0])) {
-            return hasWord(word.substr(1, word.size()), root->getChild(word[0]));
+        [[maybe_unused]] [[nodiscard]] bool hasWord(std::string word) {
+            if (root->hasChild(word[0])) {
+                return hasWord(word.substr(1, word.size()), root->getChild(word[0]));
+            }
+            return false;
         }
-        return false;
-    }
 
-    /**
+        /**
      * @brief reads words from specified file
      * @param filepath path to the file you want to read from.
      */
-    void readFromFile(const std::string& filepath){
-        std::ifstream file(filepath);
-        if(!file.is_open()) {
-            perror("Error open");
-            exit(EXIT_FAILURE);
+        void readFromFile(const std::string &filepath) {
+            std::ifstream file(filepath);
+            if (!file.is_open()) {
+                perror("Error open");
+                exit(EXIT_FAILURE);
+            }
+
+            std::string line;
+            while (getline(file, line)) {
+                addWord(line);
+            }
+            file.close();
+        }
+        Node *getRoot() {
+            return root;
         }
 
-        std::string line;
-        while(getline(file, line)) {
-            addWord(line);
-        }
-        file.close();
-    }
-    Node* getRoot(){
-        return root;
-    }
-private:
-    Node *root{nullptr};
+    private:
+        Node *root{nullptr};
 
-    /**
+        /**
      * @brief Adds word to data structure
      * @param word word to add
      * @param node pointer to the node you want to add the word to
      */
-    static void addWord(std::string word, Node *node) {
-        if (word[0] == '\0') return;                           // Prevents \0 from being added from the end of the word
-        if (!word.empty()) {                                   // checking if there is anything to add
-            if (!node->hasChild(word[0])) {                    // checking if current node doesn't have child with value that is same as first char of given word
-                node->children().push_front(new Node(word[0]));///< adding missing child
+        static void addWord(std::string word, Node *node) {
+            if (word[0] == '\0') return;                           // Prevents \0 from being added from the end of the word
+            if (!word.empty()) {                                   // checking if there is anything to add
+                if (!node->hasChild(word[0])) {                    // checking if current node doesn't have child with value that is same as first char of given word
+                    node->children().push_front(new Node(word[0]));///< adding missing child
+                }
+                addWord(word.substr(1, word.size()), node->getChild(word[0]));// switching to node that has next char from word
             }
-            addWord(word.substr(1, word.size()), node->getChild(word[0]));// switching to node that has next char from word
         }
-    }
 
-    /**
+        /**
      * @brief looks specified word
      * @param node pointer to current node
      * @param word word to look for
      * @param result resulting string
      */
-    static void findWordRecursive(Node *node, std::string word, std::string result) {
-        if (node == nullptr) {
-            std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
-            return;
-        }
+        static void findWordRecursive(Node *node, std::string word, std::string result) {
+            if (node == nullptr) {
+                std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
+                return;
+            }
 
-        if (node->value() != '\0')// prevents root node from being add to resulting string(there will be problems outputting it otherwise)
-            result += node->value();
+            if (node->value() != '\0')// prevents root node from being add to resulting string(there will be problems outputting it otherwise)
+                result += node->value();
 
-        if (node->value() == word[0])// if value of current node equal word first char, we remove this char from word
-            word = word.substr(1, word.size());
+            if (node->value() == word[0])// if value of current node equal word first char, we remove this char from word
+                word = word.substr(1, word.size());
 
-        if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            std::cout << result<<std::endl;
+            if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
+                std::cout << result << std::endl;
+            }
+            for (auto &childNode : node->children()) {// recursively going through the trie
+                findWordRecursive(childNode, word, result);
+            }
         }
-        for (auto &childNode : node->children()) {// recursively going through the trie
-            findWordRecursive(childNode, word, result);
-        }
-    }
-    /**
+        /**
      * @brief looks for specified word in beginning of other words
      * @param word word to look for
      * @param node pointer to current node
      * @return
      */
-    [[nodiscard]] bool hasWord(std::string word, Node *node) {
-        if (word[0] == '\0') return true;
-        if (node->hasChild(word[0])) {
-            return hasWord(word.substr(1, word.size()), node->getChild(word[0]));
+        [[nodiscard]] bool hasWord(std::string word, Node *node) {
+            if (word[0] == '\0') return true;
+            if (node->hasChild(word[0])) {
+                return hasWord(word.substr(1, word.size()), node->getChild(word[0]));
+            }
+            return false;
         }
-        return false;
-    }
-};
-
+    };
+}// namespace vh
 
 #endif//JB_INTSHIP_2021_TRIE_HXX
