@@ -90,7 +90,7 @@ private:
             word = word.substr(1, word.size());
 
         if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            std::cout << result;
+            std::cout << result<<std::endl;
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
             findWordRecursive(childNode, word, result);
