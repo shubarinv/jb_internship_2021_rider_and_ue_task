@@ -17,11 +17,16 @@ public:
     Trie() {
         root = new Node();
     }
-    explicit Trie(std::string filename) {
+    explicit Trie(const std::string& filename) {
         root = new Node();
     }
 
     // functions
+
+    /**
+     * @brief adds specified word to data structure
+     * @param t_word word to add
+     */
     void addWord(std::string t_word) {
         if (t_word.empty()) {
             std::cerr << "Trie(" << this << ")::addWord(): Attempt to add empty word! (word will be ignored)" << std::endl;
@@ -32,6 +37,11 @@ public:
         addWord(t_word.substr(1, t_word.size()), root->getChild(t_word[0]));// by this time we can be sure that there is a child whose val. is equal to word's first character. We will now switch to this child
     }
 
+    /**
+     * @brief recursively goes through the data structure and looks for specified combination of symbols
+     * @param t_word combination of symbols
+     * @param t_useAsync whether to use async
+     */
     void findRecursive(std::string t_word, bool t_useAsync = true) {
         for (auto &child : root->children()) {
             if (t_useAsync) {
@@ -41,6 +51,11 @@ public:
             }
         }
     }
+    /**
+     * @brief looks for specified word; starts looking from data structure's root
+     * @param word word to look for
+     * @return
+     */
     [[maybe_unused]] [[nodiscard]] bool hasWord(std::string word) {
         if (root->hasChild(word[0])) {
             return hasWord(word.substr(1, word.size()), root->getChild(word[0]));
@@ -48,6 +63,10 @@ public:
         return false;
     }
 
+    /**
+     * @brief reads words from specified file
+     * @param filepath path to the file you want to read from.
+     */
     void readFromFile(const std::string& filepath){
         std::ifstream file(filepath);
         if(!file.is_open()) {
@@ -67,6 +86,11 @@ public:
 private:
     Node *root{nullptr};
 
+    /**
+     * @brief Adds word to data structure
+     * @param word word to add
+     * @param node pointer to the node you want to add the word to
+     */
     static void addWord(std::string word, Node *node) {
         if (word[0] == '\0') return;                           // Prevents \0 from being added from the end of the word
         if (!word.empty()) {                                   // checking if there is anything to add
@@ -77,6 +101,12 @@ private:
         }
     }
 
+    /**
+     * @brief looks specified word
+     * @param node pointer to current node
+     * @param word word to look for
+     * @param result resulting string
+     */
     static void findWordRecursive(Node *node, std::string word, std::string result) {
         if (node == nullptr) {
             std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
@@ -96,7 +126,12 @@ private:
             findWordRecursive(childNode, word, result);
         }
     }
-
+    /**
+     * @brief looks for specified word in beginning of other words
+     * @param word word to look for
+     * @param node pointer to current node
+     * @return
+     */
     [[nodiscard]] bool hasWord(std::string word, Node *node) {
         if (word[0] == '\0') return true;
         if (node->hasChild(word[0])) {
