@@ -8,7 +8,6 @@
 #include "Node.hxx"
 #include <fstream>
 #include <future>
-
 class Trie {
 public:
     // Variables
@@ -42,14 +41,16 @@ public:
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    void findRecursive(std::string t_word, bool t_useAsync = true) {
+    std::forward_list<std::string> findRecursive(std::string t_word, bool t_useAsync = true) {
+        std::forward_list<std::string> results;
         for (auto &child : root->children()) {
             if (t_useAsync) {
-                auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "");// using async to speed up search process
+                auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "", &results);// using async to speed up search process
             } else {
-                findWordRecursive(root, std::move(t_word), "");
+                findWordRecursive(root, std::move(t_word), "", &results);
             }
         }
+        return results;
     }
     /**
      * @brief looks for specified word; starts looking from data structure's root
@@ -107,7 +108,7 @@ private:
      * @param word word to look for
      * @param result resulting string
      */
-    static void findWordRecursive(Node *node, std::string word, std::string result) {
+    static void findWordRecursive(Node *node, std::string word, std::string result, std::forward_list<std::string> *results) {
         if (node == nullptr) {
             std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
             return;
@@ -120,10 +121,10 @@ private:
             word = word.substr(1, word.size());
 
         if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            std::cout << result<<std::endl;
+            results->push_front(result);
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
-            findWordRecursive(childNode, word, result);
+            findWordRecursive(childNode, word, result, results);
         }
     }
     /**
