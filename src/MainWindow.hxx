@@ -90,9 +90,9 @@ private:
  */
     void fillResultsList(std::forward_list<std::string> *results) {
         itemModel->clear();
-        for (auto &result : results) {
-            auto *res = new QStandardItem(result);
-            itemModel->appendRow(newServer);
+        for (auto &result : *results) {
+            auto *res = new QStandardItem(result.c_str());
+            itemModel->appendRow(res);
         }
     }
 };
