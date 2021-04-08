@@ -16,7 +16,7 @@ int main(int argc, char *argv[]){
     QApplication app(argc, argv);
     QApplication::setStyle(QStyleFactory::create("fusion"));
     app.setStyleSheet(readStyleSheetFromFile("styleSheet.qss"));
-    MainWindow mainWindow(getScreenSize(), &app);
+    MainWindow mainWindow(getScreenSize());
     mainWindow.show();
     QApplication::exec();
     return 0;

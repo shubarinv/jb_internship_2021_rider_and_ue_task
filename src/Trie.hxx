@@ -8,7 +8,11 @@
 #include "Node.hxx"
 #include <fstream>
 #include <future>
+#include <utility>
 class Trie {
+private:
+    std::function<void(std::string)> wordFoundCallbackFunction;
+
 public:
     // Variables
 
@@ -16,7 +20,7 @@ public:
     Trie() {
         root = new Node();
     }
-    explicit Trie(const std::string& filename) {
+    [[maybe_unused]] explicit Trie(const std::string &filename) {
         root = new Node();
     }
 
@@ -41,16 +45,16 @@ public:
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    std::forward_list<std::string> findRecursive(std::string t_word, bool t_useAsync = true) {
-        std::forward_list<std::string> results;
-        for (auto &child : root->children()) {
-            if (t_useAsync) {
-                auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "", &results);// using async to speed up search process
-            } else {
-                findWordRecursive(root, std::move(t_word), "", &results);
+    [[maybe_unused]] void findRecursive(const std::string& t_word, bool t_useAsync = true) {
+
+            for (auto &child : root->children()) {
+                if (t_useAsync) {
+                    auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "", this);// using async to speed up search process
+                } else {
+                    findWordRecursive(root, t_word, "", this);
+                }
             }
-        }
-        return results;
+
     }
     /**
      * @brief looks for specified word; starts looking from data structure's root
@@ -68,22 +72,26 @@ public:
      * @brief reads words from specified file
      * @param filepath path to the file you want to read from.
      */
-    void readFromFile(const std::string& filepath){
+    [[maybe_unused]] void readFromFile(const std::string &filepath) {
         std::ifstream file(filepath);
-        if(!file.is_open()) {
+        if (!file.is_open()) {
             perror("Error open");
             exit(EXIT_FAILURE);
         }
 
         std::string line;
-        while(getline(file, line)) {
+        while (getline(file, line)) {
             addWord(line);
         }
         file.close();
     }
-    Node* getRoot(){
+    [[maybe_unused]] Node *getRoot() {
         return root;
     }
+    [[maybe_unused]] void setWordFoundCallback(std::function<void(std::string)> callbackFunction) {
+        wordFoundCallbackFunction = std::move(callbackFunction);
+    }
+
 private:
     Node *root{nullptr};
 
@@ -108,7 +116,7 @@ private:
      * @param word word to look for
      * @param result resulting string
      */
-    static void findWordRecursive(Node *node, std::string word, std::string result, std::forward_list<std::string> *results) {
+    static void findWordRecursive(Node *node, std::string word, std::string result, Trie *trie) {
         if (node == nullptr) {
             std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
             return;
@@ -121,10 +129,10 @@ private:
             word = word.substr(1, word.size());
 
         if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            results->push_front(result);
+            trie->wordFoundCallbackFunction(result);
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
-            findWordRecursive(childNode, word, result, results);
+            findWordRecursive(childNode, word, result, trie);
         }
     }
     /**

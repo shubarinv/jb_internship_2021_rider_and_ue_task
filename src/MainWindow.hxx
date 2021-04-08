@@ -24,7 +24,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT;
 
 public:
-    explicit MainWindow(QPair<int, int> screenSize, QApplication *app = nullptr) {
+    explicit MainWindow(QPair<int, int> screenSize) {
         setFixedSize(screenSize.first / 2, screenSize.second / 2);
         initFields();
         setupLayout();
@@ -38,7 +38,7 @@ private:
     QLineEdit *searchBox{};
     QPushButton *selectFile_btn{};
     QWidget *widget{};
-    Trie *trie;
+    Trie *trie{};
 
     void initFields() {
         widget = new QWidget(this);
@@ -62,9 +62,10 @@ private:
             selectFile();
         });
         connect(searchBox, &QLineEdit::textChanged, this, [this]() {
-            searchWord();
+                searchWord();
         });
         trie = new Trie();
+        trie->setWordFoundCallback([this](auto &&PH1) { addResultToList(std::forward<decltype(PH1)>(PH1)); });
     }
     void setupLayout() {
         setCentralWidget(widget);
@@ -80,21 +81,21 @@ private:
         trie->readFromFile(filepath->text().toStdString());
     }
     void searchWord() {
+        clearResults();
         if (searchBox->text().length() >= 3) {
-            auto searchResults = trie->findRecursive(searchBox->text().toStdString());
-            fillResultsList(&searchResults);
+            trie->findRecursive(searchBox->text().toStdString());
         }
     }
-    /**
- * @brief fills vertical list with elements
- */
-    void fillResultsList(std::forward_list<std::string> *results) {
+
+    void addResultToList(const std::string &result) {
+        auto *res = new QStandardItem(result.c_str());
+        itemModel->appendRow(res);
+    }
+
+    void clearResults() {
         itemModel->clear();
-        for (auto &result : *results) {
-            auto *res = new QStandardItem(result.c_str());
-            itemModel->appendRow(res);
-        }
     }
+
 };
 
 
