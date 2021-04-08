@@ -5,15 +5,14 @@
 #ifndef JB_INTSHIP_2021_THREADPOOL_HXX
 #define JB_INTSHIP_2021_THREADPOOL_HXX
 
+#include "SafeQueue.hxx"
 #include "easylogging++.h"
-
-#include <queue>
 #include <thread>
 class ThreadPool {
 private:
     std::vector<std::thread> workers{};
 
-    std::queue<std::function<void()>> tasksQueue;
+    SafeQueue<std::function<void()>> tasksQueue;
     bool terminateAllThreads{false};
 
 
@@ -26,33 +25,24 @@ public:
             workers.emplace_back(&ThreadPool::checkForTasks, this);
         }
     }
-    std::mutex queueLock;
     void checkForTasks() {
         while (!terminateAllThreads) {
-            queueLock.lock();
-            LOG(INFO) << "There are " << tasksQueue.size() << " tasks left";
-            queueLock.unlock();
-            if (tasksQueue.empty()) {
-                using namespace std::chrono_literals;
-                std::this_thread::sleep_for(100ms);
-
-            } else {
-                tasksQueue.front();
-                queueLock.lock();
-                tasksQueue.pop();
-                queueLock.unlock();
-            }
+            auto ts=tasksQueue.dequeue();
+            ts();
+            LOG(INFO) << "Task done";
         }
     }
     void terminateThreads() {
         terminateAllThreads = true;
     }
     void addTask(const std::function<void()> &task) {
-        queueLock.lock();
-        tasksQueue.push(task);
-        queueLock.unlock();
+        tasksQueue.enqueue(task);
         LOG(INFO) << "New Task";
-        //std::cout << "New Task created(" << &task << ")" << std::endl;
+    }
+    void clearQueue() {
+        while (!tasksQueue.empty()) {
+            tasksQueue.dequeue();
+        }
     }
 };
 

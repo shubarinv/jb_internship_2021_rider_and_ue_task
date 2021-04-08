@@ -52,6 +52,7 @@ public:
         wordFoundCallbackFunction = std::move(foundCallback);
     }
     void walkThroughTree() {
+        LOG(INFO) << "Task exec";
         findWordRecursive(rootNode, word, "", this);
     }
 };
@@ -94,10 +95,11 @@ public:
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    [[maybe_unused]] void findRecursive(const std::string &t_word, std::function<void(std::string)> callbackFunction) {
+    [[maybe_unused]] void findRecursive(const std::string &t_word, const std::function<void(std::string)> &callbackFunction) {
+        threadPool->clearQueue();
         for (auto &child : root->children()) {
             TrieWalker walker(child, t_word, callbackFunction);
-            threadPool->addTask([&]() { walker.walkThroughTree(); });
+            threadPool->addTask([ObjectPtr = &walker] { ObjectPtr->walkThroughTree(); });
         }
     }
 

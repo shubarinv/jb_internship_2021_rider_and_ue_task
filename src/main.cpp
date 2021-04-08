@@ -16,6 +16,14 @@ QPair<int, int> getScreenSize();
 
 INITIALIZE_EASYLOGGINGPP
 int main(int argc, char *argv[]) {
+    el::Configurations defaultConf;
+    defaultConf.setToDefault();
+    // Values are always std::string
+    defaultConf.set(el::Level::Info,
+                    el::ConfigurationType::Format, "%datetime [%thread] (%level) %msg");
+    // default logger uses default configurations
+    el::Loggers::reconfigureLogger("default", defaultConf);
+
     QApplication app(argc, argv);
     QApplication::setStyle(QStyleFactory::create("fusion"));
     app.setStyleSheet(readStyleSheetFromFile("styleSheet.qss"));
