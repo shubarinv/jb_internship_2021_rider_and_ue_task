@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QFile>
 
+#include "easylogging++.h"
 #include <QScreen>
 #include <QStyleFactory>
 #include <Qpair>
@@ -12,7 +13,9 @@
 QString readStyleSheetFromFile(const QString &filename);
 QPair<int, int> getScreenSize();
 
-int main(int argc, char *argv[]){
+
+INITIALIZE_EASYLOGGINGPP
+int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
     QApplication::setStyle(QStyleFactory::create("fusion"));
     app.setStyleSheet(readStyleSheetFromFile("styleSheet.qss"));

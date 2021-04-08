@@ -20,6 +20,6 @@ IF (WIN32)
     set(CMAKE_EXE_LINKER_FLAGS "-static -lstdc++ -lpthread")
 ENDIF ()
 
-add_executable(${CMAKE_PROJECT_NAME}_app ${SOURCES} Trie.hxx Node.hxx MainWindow.hxx ThreadPool.hxx)
+add_executable(${CMAKE_PROJECT_NAME}_app ${SOURCES} Trie.hxx Node.hxx MainWindow.hxx ThreadPool.hxx easylogging++.cc)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Core)

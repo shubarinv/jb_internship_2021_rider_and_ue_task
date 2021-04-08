@@ -10,10 +10,55 @@
 #include <fstream>
 #include <future>
 #include <utility>
+
+
+class TrieWalker {
+private:
+    bool done{false};
+    Node *rootNode{nullptr};
+    std::string word;
+    std::function<void(std::string)> wordFoundCallbackFunction;
+    /**
+     * @brief looks specified word
+     * @param node pointer to current node
+     * @param word word to look for
+     * @param result resulting string
+     */
+    static void findWordRecursive(Node *node, std::string word, std::string result, TrieWalker *trieWalker) {
+        if (node == nullptr) {
+            std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
+            return;
+        }
+
+        if (node->value() != '\0')// prevents root node from being add to resulting string(there will be problems outputting it otherwise)
+            result += node->value();
+
+        if (node->value() == word[0])// if value of current node equal word first char, we remove this char from word
+            word = word.substr(1, word.size());
+
+        if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
+            LOG(INFO) << "Word found adding: " << result;
+            trieWalker->wordFoundCallbackFunction(result);
+        }
+        for (auto &childNode : node->children()) {// recursively going through the trie
+            findWordRecursive(childNode, word, result, trieWalker);
+        }
+    }
+
+public:
+    TrieWalker(Node *startNode, std::string wordToLookFor, std::function<void(std::string)> foundCallback) {
+        rootNode = startNode;
+        word = std::move(wordToLookFor);
+        wordFoundCallbackFunction = std::move(foundCallback);
+    }
+    void walkThroughTree() {
+        findWordRecursive(rootNode, word, "", this);
+    }
+};
+
 class Trie {
 private:
-    std::function<void(std::string)> wordFoundCallbackFunction;
-    ThreadPool*threadPool{};
+    ThreadPool *threadPool{};
 
 public:
     // Variables
@@ -21,11 +66,11 @@ public:
     // Constructors
     Trie() {
         root = new Node();
-        threadPool = new ThreadPool();
+        threadPool = new ThreadPool(1);
     }
     [[maybe_unused]] explicit Trie(const std::string &filename) {
         root = new Node();
-        threadPool = new ThreadPool();
+        threadPool = new ThreadPool(1);
     }
 
     // functions
@@ -49,15 +94,11 @@ public:
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    [[maybe_unused]] void findRecursive(const std::string& t_word, bool t_useAsync = true) {
-            for (auto &child : root->children()) {
-                if (t_useAsync) {
-                    auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "", this);// using async to speed up search process
-                } else {
-                    findWordRecursive(root, t_word, "", this);
-                }
-            }
-
+    [[maybe_unused]] void findRecursive(const std::string &t_word, std::function<void(std::string)> callbackFunction) {
+        for (auto &child : root->children()) {
+            TrieWalker walker(child, t_word, callbackFunction);
+            threadPool->addTask([&]() { walker.walkThroughTree(); });
+        }
     }
 
     /**
@@ -92,9 +133,6 @@ public:
     [[maybe_unused]] Node *getRoot() {
         return root;
     }
-    [[maybe_unused]] void setWordFoundCallback(std::function<void(std::string)> callbackFunction) {
-        wordFoundCallbackFunction = std::move(callbackFunction);
-    }
 
 private:
     Node *root{nullptr};
@@ -114,31 +152,6 @@ private:
         }
     }
 
-    /**
-     * @brief looks specified word
-     * @param node pointer to current node
-     * @param word word to look for
-     * @param result resulting string
-     */
-    static void findWordRecursive(Node *node, std::string word, std::string result, Trie *trie) {
-        if (node == nullptr) {
-            std::cerr << "Error: Trie::findWordRecursive: node somewhy empty";
-            return;
-        }
-
-        if (node->value() != '\0')// prevents root node from being add to resulting string(there will be problems outputting it otherwise)
-            result += node->value();
-
-        if (node->value() == word[0])// if value of current node equal word first char, we remove this char from word
-            word = word.substr(1, word.size());
-
-        if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            trie->wordFoundCallbackFunction(result);
-        }
-        for (auto &childNode : node->children()) {// recursively going through the trie
-            findWordRecursive(childNode, word, result, trie);
-        }
-    }
     /**
      * @brief looks for specified word in beginning of other words
      * @param word word to look for

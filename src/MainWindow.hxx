@@ -65,7 +65,6 @@ private:
                 searchWord();
         });
         trie = new Trie();
-        trie->setWordFoundCallback([this](auto &&PH1) { addResultToList(std::forward<decltype(PH1)>(PH1)); });
     }
     void setupLayout() {
         setCentralWidget(widget);
@@ -84,11 +83,12 @@ private:
         clearResults();
         if (searchBox->text().length() >= 3) {
             // TODO: DO SOMETHING WITH THAT! It locks main thread
-            trie->findRecursive(searchBox->text().toStdString());
+            trie->findRecursive(searchBox->text().toStdString(), [this](auto &&PH1) { addResultToList(std::forward<decltype(PH1)>(PH1)); });
         }
     }
 
     void addResultToList(const std::string &result) {
+        LOG(INFO) << "Got new word: " << result;
         auto *res = new QStandardItem(result.c_str());
         itemModel->appendRow(res);
     }
