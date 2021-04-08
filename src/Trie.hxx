@@ -6,12 +6,14 @@
 #define JB_INTSHIP_2021_TRIE_HXX
 
 #include "Node.hxx"
+#include "ThreadPool.hxx"
 #include <fstream>
 #include <future>
 #include <utility>
 class Trie {
 private:
     std::function<void(std::string)> wordFoundCallbackFunction;
+    ThreadPool*threadPool{};
 
 public:
     // Variables
@@ -19,9 +21,11 @@ public:
     // Constructors
     Trie() {
         root = new Node();
+        threadPool = new ThreadPool();
     }
     [[maybe_unused]] explicit Trie(const std::string &filename) {
         root = new Node();
+        threadPool = new ThreadPool();
     }
 
     // functions
@@ -46,7 +50,6 @@ public:
      * @param t_useAsync whether to use async
      */
     [[maybe_unused]] void findRecursive(const std::string& t_word, bool t_useAsync = true) {
-
             for (auto &child : root->children()) {
                 if (t_useAsync) {
                     auto tmp = std::async(std::launch::async, findWordRecursive, root, std::move(t_word), "", this);// using async to speed up search process
@@ -56,6 +59,7 @@ public:
             }
 
     }
+
     /**
      * @brief looks for specified word; starts looking from data structure's root
      * @param word word to look for

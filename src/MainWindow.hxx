@@ -83,6 +83,7 @@ private:
     void searchWord() {
         clearResults();
         if (searchBox->text().length() >= 3) {
+            // TODO: DO SOMETHING WITH THAT! It locks main thread
             trie->findRecursive(searchBox->text().toStdString());
         }
     }
