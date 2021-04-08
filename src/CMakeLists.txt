@@ -8,6 +8,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt5 COMPONENTS Widgets Core REQUIRED)
 
+
 file(GLOB_RECURSE SOURCES LIST_DIRECTORIES true
         "*.h"
         "*.hpp"
