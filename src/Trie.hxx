@@ -37,7 +37,7 @@ private:
             word = word.substr(1, word.size());
 
         if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            LOG(INFO) << "Word found adding: " << result;
+         //   LOG(INFO) << "TrieWalker("<<trieWalker<<")Word found adding: " << result;
             trieWalker->wordFoundCallbackFunction(result);
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
@@ -52,7 +52,6 @@ public:
         wordFoundCallbackFunction = std::move(foundCallback);
     }
     void walkThroughTree() {
-        LOG(INFO) << "Task exec";
         findWordRecursive(rootNode, word, "", this);
     }
 };
@@ -63,11 +62,10 @@ private:
 
 public:
     // Variables
-
     // Constructors
     Trie() {
         root = new Node();
-        threadPool = new ThreadPool(1);
+        threadPool = new ThreadPool();
     }
     [[maybe_unused]] explicit Trie(const std::string &filename) {
         root = new Node();
