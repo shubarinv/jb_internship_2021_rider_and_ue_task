@@ -6,6 +6,7 @@
 #define DB_QT_COURSEWORK_MAINWINDOW_HXX
 
 #include "Trie.hxx"
+#include "SafeQueue.hxx"
 #include <QApplication>
 #include <QFileDialog>
 #include <QGridLayout>
@@ -17,11 +18,12 @@
 #include <QPushButton>
 #include <QStandardItemModel>
 #include <QStatusBar>
-#include <future>
 #include <iostream>
+#include <mutex>
+
 
 class MainWindow : public QMainWindow {
-    Q_OBJECT;
+Q_OBJECT;
 
 public:
     explicit MainWindow(QPair<int, int> screenSize) {
@@ -38,7 +40,9 @@ private:
     QLineEdit *searchBox{};
     QPushButton *selectFile_btn{};
     QWidget *widget{};
-    Trie *trie{};
+    CompressedTrie *trie{};
+    SafeQueue<std::string> queueToResultList;
+    std::mutex m;
 
     void initFields() {
         widget = new QWidget(this);
@@ -59,13 +63,33 @@ private:
         searchResults->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
         connect(selectFile_btn, &QPushButton::clicked, this, [this]() {
-            selectFile();
+          selectFile();
         });
         connect(searchBox, &QLineEdit::textChanged, this, [this]() {
-                searchWord();
+          searchWord();
         });
-        trie = new Trie();
-        trie->setWordFoundCallback([this](auto &&PH1) { addResultToList(std::forward<decltype(PH1)>(PH1)); });
+        trie = new CompressedTrie();
+        std::thread t1([&] {
+          while (true) {
+              m.lock();
+              if (queueToResultList.empty()) {
+                  m.unlock();
+                  using namespace std::chrono_literals;
+                  std::this_thread::sleep_for(10ns);
+              } else {
+                  while (!queueToResultList.empty()) {
+                      auto *res = new QStandardItem(queueToResultList.dequeue().c_str());
+                      itemModel->appendRow(res);
+                      m.unlock();
+                      using namespace std::chrono_literals;
+                      std::this_thread::sleep_for(1ms);
+                  }
+
+              }
+              m.unlock();
+          }
+        });
+        t1.detach();
     }
     void setupLayout() {
         setCentralWidget(widget);
@@ -79,23 +103,39 @@ private:
     void selectFile() {
         filepath->setText(QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text files (*.txt)")));
         trie->readFromFile(filepath->text().toStdString());
+        trie->compress();
     }
     void searchWord() {
         clearResults();
-        if (searchBox->text().length() >= 3) {
-            trie->findRecursive(searchBox->text().toStdString());
+        trie->cancelAsync();
+        if (searchBox->text().length() >= 1) {
+            trie->findRecursive(searchBox->text().toStdString(), &queueToResultList);
         }
     }
 
     void addResultToList(const std::string &result) {
+        while (!m.try_lock()) {
+            spdlog::info("MainWindow::addResultToList Waiting for mutex unlock...");
+        }
         auto *res = new QStandardItem(result.c_str());
         itemModel->appendRow(res);
+        m.unlock();
+        spdlog::info("Added result to list.");
     }
 
     void clearResults() {
-        itemModel->clear();
-    }
+        while (!m.try_lock()) {
+            spdlog::info("MainWindow::clearResults Waiting for mutex unlock...");
+        }
 
+        while(!queueToResultList.empty()){
+            queueToResultList.dequeue();
+        }
+
+        itemModel->clear();
+        m.unlock();
+        spdlog::info("MainWindow::clearResults done.");
+    }
 };
 
 
