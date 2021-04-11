@@ -10,7 +10,6 @@
 #include <fstream>
 #include <future>
 #include <memory>
-#include <spdlog/spdlog.h>
 
 class CompressedTrie {
 private:
@@ -88,20 +87,13 @@ public:
     }
     void cancelAsync(){
         stopAsync=true;
-        spdlog::info("Stoping asyncs");
-        spdlog::info("Waiting for asyncs to quit");
         for (auto &task:pending_futures){
-            spdlog::info("Checking if task finished");
             while(!checkIfAsyncTaskFinished(task)){
                 using namespace std::chrono_literals;
                 std::this_thread::sleep_for(10ns);
-                spdlog::info("task not yet finished");
             }
-            spdlog::info("Next victim");
         }
-        spdlog::info("Done Waiting for asyncs");
         pending_futures.clear();
-        spdlog::info("asyncs cleared");
     }
 private:
     std::shared_ptr<Node> root{nullptr};
