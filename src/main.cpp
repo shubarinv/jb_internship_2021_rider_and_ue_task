@@ -19,6 +19,7 @@ int main(int argc, char *argv[]){
     MainWindow mainWindow(getScreenSize());
     mainWindow.show();
     QApplication::exec();
+    mainWindow.terminate();
     return 0;
 }
 

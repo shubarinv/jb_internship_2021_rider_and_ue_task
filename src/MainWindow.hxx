@@ -23,7 +23,8 @@
 
 
 class MainWindow : public QMainWindow {
-Q_OBJECT;
+Q_OBJECT
+
 
 public:
     explicit MainWindow(QPair<int, int> screenSize) {
@@ -31,6 +32,10 @@ public:
         initFields();
         setupLayout();
     }
+    void terminate(){
+        quit=true;
+        trie->cancelAsync();
+    };
 
 private:
     QGridLayout *layout{};
@@ -43,6 +48,7 @@ private:
     CompressedTrie *trie{};
     SafeQueue<std::string> queueToResultList;
     std::mutex m;
+    bool quit{false};
 
     void initFields() {
         widget = new QWidget(this);
@@ -70,7 +76,7 @@ private:
         });
         trie = new CompressedTrie();
         std::thread t1([&] {
-          while (true) {
+          while (!quit) {
               m.lock();
               if (queueToResultList.empty()) {
                   m.unlock();
@@ -115,17 +121,18 @@ private:
 
     void addResultToList(const std::string &result) {
         while (!m.try_lock()) {
-            spdlog::info("MainWindow::addResultToList Waiting for mutex unlock...");
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ns);
         }
         auto *res = new QStandardItem(result.c_str());
         itemModel->appendRow(res);
         m.unlock();
-        spdlog::info("Added result to list.");
     }
 
     void clearResults() {
         while (!m.try_lock()) {
-            spdlog::info("MainWindow::clearResults Waiting for mutex unlock...");
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(10ns);
         }
 
         while(!queueToResultList.empty()){
@@ -134,7 +141,6 @@ private:
 
         itemModel->clear();
         m.unlock();
-        spdlog::info("MainWindow::clearResults done.");
     }
 };
 

@@ -39,8 +39,12 @@ TEST_CASE("Checking Trie", "[Trie]") {
         trie.findRecursive("et",&results);
         using namespace std::chrono_literals;
         std::this_thread::sleep_for(1s);
+        SafeQueue<std::string>check;
+        check.enqueue("Test");
+        check.enqueue("Is the best");
+        check.enqueue("JetBrains");
         while (!results.empty()){
-            std::cout<<results.dequeue()<<std::endl;
+            REQUIRE(results.dequeue()==check.dequeue());
         }
     }
 }
