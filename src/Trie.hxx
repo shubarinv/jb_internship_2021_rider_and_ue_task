@@ -13,7 +13,6 @@
 
 class CompressedTrie {
 private:
-
 public:
     // Constructors
     CompressedTrie() {
@@ -44,9 +43,9 @@ public:
      * @param t_useAsync whether to use async
      */
     [[maybe_unused]] void findRecursive(const std::string &t_word, SafeQueue<std::string> *queue) {
-        stopAsync=false;
+        stopAsync = false;
         for (auto &child : root->children()) {
-            pending_futures.push_back( std::async(std::launch::async, findWordRecursive, child.get(), t_word, "", queue,&stopAsync));// using async to speed up search process
+            pending_futures.push_back(std::async(std::launch::async, findWordRecursive, child.get(), t_word, "", queue, &stopAsync));// using async to speed up search process
         }
     }
     /**
@@ -55,6 +54,10 @@ public:
      * @return
      */
     [[maybe_unused]] [[nodiscard]] bool hasWord(std::string word) {
+        for (auto &chr : root->value()) {
+            if (chr == word[0])
+                word = word.substr(1, word.size());
+        }
         if (root->hasChild(word[0])) {
             return hasWord(word.substr(1, word.size()), root->getChild(word[0]));
         }
@@ -85,16 +88,17 @@ public:
     void compress() {
         compressTrie(root.get());
     }
-    void cancelAsync(){
-        stopAsync=true;
-        for (auto &task:pending_futures){
-            while(!checkIfAsyncTaskFinished(task)){
+    void cancelAsync() {
+        stopAsync = true;
+        for (auto &task : pending_futures) {
+            while (!checkIfAsyncTaskFinished(task)) {
                 using namespace std::chrono_literals;
                 std::this_thread::sleep_for(10ns);
             }
         }
         pending_futures.clear();
     }
+
 private:
     std::shared_ptr<Node> root{nullptr};
     bool stopAsync{false};
@@ -122,10 +126,11 @@ private:
      */
     [[nodiscard]] static bool hasWord(std::string word, Node *node) {
         if (word[0] == '\0') return true;
-        if (node->hasChild(word[0])) {
-            return hasWord(word.substr(1, word.size()), node->getChild(word[0]));
+        for (auto &chr : node->value()) {
+            if (chr == word[0])
+                word = word.substr(1, word.size());
         }
-        return false;
+        return hasWord(word.substr(1, word.size()), node->getChild(word[0]));
     }
     static void compressTrie(Node *node) {
         int childrenCount = 0;
@@ -147,8 +152,8 @@ private:
  * @param word word to look for
  * @param result resulting string
  */
-    static void findWordRecursive(Node *node, std::string word, std::string result, SafeQueue<std::string>*queue,bool*stop) {
-        if(*stop){
+    static void findWordRecursive(Node *node, std::string word, std::string result, SafeQueue<std::string> *queue, bool *stop) {
+        if (*stop) {
             return;
         }
 
@@ -168,7 +173,7 @@ private:
             queue->enqueue(result);
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
-            findWordRecursive(childNode.get(), word, result, queue,stop);
+            findWordRecursive(childNode.get(), word, result, queue, stop);
         }
     }
     template<typename T>

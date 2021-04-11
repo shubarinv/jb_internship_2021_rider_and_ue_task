@@ -8,25 +8,26 @@
 TEST_CASE("Checking Trie", "[Trie]") {
     SECTION("AddWord") {
         SECTION("Calling addWord() directly") {
-            vh::Trie trie;
+            CompressedTrie trie;
             trie.addWord("test");
-            REQUIRE(trie.getRoot()->getChild('t')->getChild('e')->getChild('s')->getChild('t') != nullptr);
+            REQUIRE(trie.hasWord("test"));
         }
         SECTION("Using readFromFile()") {
             SECTION("reading empty file") {
-                vh::Trie trie;
+                CompressedTrie trie;
                 trie.readFromFile("../../catch2_tests/emptyFile.txt");
                 REQUIRE(trie.getRoot()->children().empty());
             }
             SECTION("reading file with content") {
-                vh::Trie trie;
+                CompressedTrie trie;
                 trie.readFromFile("../../catch2_tests/fileWithContent.txt");
                 REQUIRE(!trie.getRoot()->children().empty());
             }
         }
     }
     SECTION("Find word") {
-        vh::Trie trie;
+        CompressedTrie trie;
+        SafeQueue<std::string>results;
         trie.readFromFile("../../catch2_tests/fileWithContent.txt");
         REQUIRE(trie.hasWord("JetBrains"));
         REQUIRE(trie.hasWord("Is the best"));
@@ -34,8 +35,12 @@ TEST_CASE("Checking Trie", "[Trie]") {
         REQUIRE(trie.hasWord("Wenhop"));
         REQUIRE(trie.hasWord("SN15"));
         REQUIRE(trie.hasWord("Test"));
-        REQUIRE_FALSE(trie.hasWord("test"));
         REQUIRE(trie.hasWord("tesla"));
-        REQUIRE_FALSE(trie.hasWord("Tesla"));
+        trie.findRecursive("et",&results);
+        using namespace std::chrono_literals;
+        std::this_thread::sleep_for(1s);
+        while (!results.empty()){
+            std::cout<<results.dequeue()<<std::endl;
+        }
     }
 }
