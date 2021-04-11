@@ -5,11 +5,12 @@
 #ifndef DB_QT_COURSEWORK_MAINWINDOW_HXX
 #define DB_QT_COURSEWORK_MAINWINDOW_HXX
 
-#include "Trie.hxx"
 #include "SafeQueue.hxx"
+#include "Trie.hxx"
 #include <QApplication>
 #include <QFileDialog>
 #include <QGridLayout>
+#include <QLabel>
 #include <QLineEdit>
 #include <QListView>
 #include <QMainWindow>
@@ -46,6 +47,7 @@ private:
     QPushButton *selectFile_btn{};
     QWidget *widget{};
     CompressedTrie *trie{};
+    QLabel *loadLabel{};
     SafeQueue<std::string> queueToResultList;
     std::mutex m;
     bool quit{false};
@@ -67,7 +69,10 @@ private:
         searchResults = new QListView(this);
         searchResults->setModel(itemModel);
         searchResults->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
+        loadLabel=new QLabel(this);
+        QFont f( "Arial", 25, QFont::Bold);
+        loadLabel->setFont(f);
+        loadLabel->setVisible(false);
         connect(selectFile_btn, &QPushButton::clicked, this, [this]() {
           selectFile();
         });
@@ -103,13 +108,20 @@ private:
         layout->addWidget(filepath, 0, 0, 1, 1);
         layout->addWidget(selectFile_btn, 0, 1, 1, 1);
         layout->addWidget(searchResults, 1, 0, 1, 2);
+        layout->addWidget(loadLabel, 1, 0, 1, 2);
         layout->addWidget(searchBox, 2, 0, 1, 2);
     }
 
     void selectFile() {
         filepath->setText(QFileDialog::getOpenFileName(this, tr("Open File"), "", tr("Text files (*.txt)")));
+        loadLabel->setVisible(true);
+        loadLabel->setText("Loading file...");
+        QApplication::processEvents();
         trie->readFromFile(filepath->text().toStdString());
+        loadLabel->setText("Optimizing file...");
+        QApplication::processEvents();
         trie->compress();
+        loadLabel->setVisible(false);
     }
     void searchWord() {
         clearResults();
