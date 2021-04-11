@@ -5,7 +5,7 @@
 #ifndef DB_QT_COURSEWORK_MAINWINDOW_HXX
 #define DB_QT_COURSEWORK_MAINWINDOW_HXX
 
-#include "SafeQueue.hxx"
+#include "SafeForwardList.hxx"
 #include "Trie.hxx"
 #include <QApplication>
 #include <QFileDialog>
@@ -48,7 +48,7 @@ private:
     QWidget *widget{};
     CompressedTrie *trie{};
     QLabel *loadLabel{};
-    SafeQueue<std::string> queueToResultList;
+    SafeList<std::string> queueToResultList;
     std::mutex m;
     bool quit{false};
 
@@ -134,7 +134,7 @@ private:
     void addResultToList(const std::string &result) {
         while (!m.try_lock()) {
             using namespace std::chrono_literals;
-            std::this_thread::sleep_for(10ns);
+            std::this_thread::sleep_for(5ns);
         }
         auto *res = new QStandardItem(result.c_str());
         itemModel->appendRow(res);

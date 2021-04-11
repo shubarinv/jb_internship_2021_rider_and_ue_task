@@ -6,7 +6,6 @@
 #define JB_INTSHIP_2021_COMPRESSEDTRIE_HXX
 
 #include "Node.hxx"
-#include "SafeQueue.hxx"
 #include <fstream>
 #include <future>
 #include <memory>
@@ -42,7 +41,7 @@ public:
      * @param t_word combination of symbols
      * @param t_useAsync whether to use async
      */
-    [[maybe_unused]] void findRecursive(const std::string &t_word, SafeQueue<std::string> *queue) {
+    [[maybe_unused]] void findRecursive(const std::string &t_word, SafeList<std::string> *queue) {
         stopAsync = false;
         for (auto &child : root->children()) {
             pending_futures.push_back(std::async(std::launch::async, findWordRecursive, child.get(), t_word, "", queue, &stopAsync));// using async to speed up search process
@@ -152,7 +151,7 @@ private:
  * @param word word to look for
  * @param result resulting string
  */
-    static void findWordRecursive(Node *node, std::string word, std::string result, SafeQueue<std::string> *queue, bool *stop) {
+    static void findWordRecursive(Node *node, std::string word, std::string result, SafeList<std::string> *queue, bool *stop) {
         if (*stop) {
             return;
         }
@@ -170,7 +169,7 @@ private:
                 word = word.substr(1, word.size());
         }
         if (node->children().empty() && word.empty()) {// if word was found, and we reached the end of branch
-            queue->enqueue(result);
+            queue->push_back(result);
         }
         for (auto &childNode : node->children()) {// recursively going through the trie
             findWordRecursive(childNode.get(), word, result, queue, stop);

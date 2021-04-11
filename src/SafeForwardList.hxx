@@ -1,23 +1,25 @@
-// code from https://gist.github.com/murphypei/d59cbcdf6c8485ed98510dc1f0b3ddca
-#ifndef SAFE_QUEUE
-#define SAFE_QUEUE
+//
+// Created by vhund on 11.04.2021.
+//
+
+#ifndef JB_INTSHIP_2021_SAFEFORWARDLIST_HXX
+#define JB_INTSHIP_2021_SAFEFORWARDLIST_HXX
+
 
 #include <condition_variable>
+#include <list>
 #include <mutex>
-#include <queue>
-
-// A threadsafe-queue.
 template<class T>
-class SafeQueue {
+class SafeList {
 public:
-    SafeQueue() : q(), m(), c() {}
+    SafeList() : list(), m(), c() {}
 
-    ~SafeQueue() {}
+    ~SafeList() {}
 
     // Add an element to the queue.
-    void enqueue(T t) {
+    void push_back(T t) {
         std::lock_guard<std::mutex> lock(m);
-        q.push(t);
+        list.push_back(t);
         c.notify_one();
     }
 
@@ -25,23 +27,25 @@ public:
     // If the queue is empty, wait till a element is avaiable.
     T dequeue() {
         std::unique_lock<std::mutex> lock(m);
-        while (q.empty()) {
+        while (list.empty()) {
             // release lock as long as the wait and reaquire it afterwards.
             c.wait(lock);
         }
-        T val = q.front();
-        q.pop();
+        T val = list.back();
+        list.pop_back();
         return val;
     }
     bool empty() {
         std::unique_lock<std::mutex> lock(m);
-        return q.empty();
+        return list.empty();
     }
 
 
 private:
-    std::queue<T> q;
+    std::list<T> list;
     mutable std::mutex m;
     std::condition_variable c;
 };
-#endif
+
+
+#endif//JB_INTSHIP_2021_SAFEFORWARDLIST_HXX
